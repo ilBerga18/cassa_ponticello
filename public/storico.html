@@ -278,12 +278,19 @@
                         }
                     }).join('');
 
+                    let nomeOriginale = ord.nome_cliente || '';
+                    let nomeMostrato = nomeOriginale.length > 26
+                        ? nomeOriginale.substring(0, 26) + '...'
+                        : nomeOriginale;
+
                     return `
                         <tr>
                             <td><span class="badge-id">#${ord.id}</span></td>
                             <td style="white-space: nowrap;">${dataFormattata}</td>
                             <td>
-                                ${ord.nome_cliente && ord.nome_cliente !== 'N/A' ? `<span class="badge-cliente">${ord.nome_cliente}</span>` : '<span style="color: #94a3b8;">—</span>'}
+                                ${nomeOriginale && nomeOriginale !== 'N/A'
+                                    ? `<span class="badge-cliente" title="${nomeOriginale}">${nomeMostrato}</span>`
+                                    : '<span style="color: #94a3b8;">—</span>'}
                             </td>
                             ${celleProdotti}
                             <td class="totale-cell">${ord.totale.toFixed(2)} €</td>
