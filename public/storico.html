@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrice Storico Ordini - Cassa Festa</title>
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --panel-bg: #ffffff;
+            --primary: #2563eb;
+            --text-color: #0f172a;
+            --border-color: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 16px 24px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* --- HEADER --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        h1 { font-size: 1.6rem; font-weight: 800; color: var(--text-color); }
+
+        .btn-back {
+            background-color: var(--panel-bg);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background-color: var(--primary); color: white; }
+
+        /* --- TABELLA MATRICE SCROLLABILE --- */
+        .table-container {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            overflow: auto;
+            max-height: calc(100vh - 110px);
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px 10px;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid #f1f5f9;
+        }
+
+        /* INTESTAZIONE STICKY (IN ALTO) */
+        th {
+            background-color: #f8fafc;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        /* INTESTAZIONI VERTICALI PER I PRODOTTI */
+        th.th-prodotto {
+            height: 140px;
+            vertical-align: bottom;
+            padding: 10px 1px;
+            text-align: center;
+            min-width: 22px;
+        }
+
+        .vertical-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #334155;
+            margin: 0 auto;
+        }
+
+        tr:hover { background-color: #f8fafc; }
+
+        .badge-id {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .badge-cliente {
+            font-weight: 700;
+            color: #0369a1;
+            /*background-color: #f0fdf4;*/
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        /* STILI CELLE QUANTITÀ */
+        td.qty-cell {
+            text-align: center;
+            font-size: 0.85rem;
+            padding: 8px 2px !important;
+        }
+
+        td.qty-active {
+            font-weight: 800;
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .totale-cell {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: #16a34a;
+            white-space: nowrap;
+        }
+
+        /* PIÈ DI PAGINA TABELLA STICKY (IN FONDO) */
+        tfoot td {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            background-color: #f8fafc;
+            border-top: 2px solid var(--border-color);
+            box-shadow: 0 -3px 6px rgba(0, 0, 0, 0.06);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Storico Ordini</h1>
+        <a href="/" class="btn-back">Torna alla Cassa</a>
+    </header>
+
+    <!-- TABELLA A MATRICE -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr id="intestazione-tabella">
+                    <th># ID</th>
+                    <th>Data e Ora</th>
+                    <th>Cliente</th>
+                    <!-- I prodotti verranno inseriti qui in verticale via JS -->
+                    <th>Totale</th>
+                </tr>
+            </thead>
+            <tbody id="tabella-corpo">
+                <tr>
+                    <td colspan="20" style="text-align: center; padding: 30px; color: #64748b;">
+                        Caricamento matrice dal database in corso...
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot id="tabella-pie">
+                <!-- Il piè di pagina con totali prodotti e incasso totale verrà inserito via JS -->
+            </tfoot>
+        </table>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Carica contemporaneamente listino prodotti e storico ordini
+                const [resProdotti, resStorico] = await Promise.all([
+                    fetch('/api/prodotti'),
+                    fetch('/api/storico')
+                ]);
+
+                const prodotti = await resProdotti.json();
+                const ordini = await resStorico.json();
+
+                // 2. Genera dinamicamente le colonne dei prodotti nell'intestazione <thead>
+                const trHeader = document.getElementById('intestazione-tabella');
+                let headerHtml = `
+                    <th># ID</th>
+                    <th>Data e Ora</th>
+                    <th>Nome</th>
+                `;
+
+                prodotti.forEach(p => {
+                    headerHtml += `
+                        <th class="th-prodotto">
+                            <div class="vertical-text">${p.nome.toUpperCase()}</div>
+                        </th>
+                    `;
+                });
+
+                headerHtml += `<th>Totale</th>`;
+                trHeader.innerHTML = headerHtml;
+
+                // 3. Popola il corpo della tabella e calcola i totali per prodotto
+                const tbody = document.getElementById('tabella-corpo');
+
+                if (ordini.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="${4 + prodotti.length}" style="text-align: center; padding: 30px; color: #64748b;">
+                                Nessun ordine salvato nel database.
+                            </td>
+                        </tr>`;
+
+                    document.getElementById('tabella-pie').innerHTML = `
+                        <tr>
+                            <td colspan="3"></td>
+                            ${prodotti.map(() => '<td class="qty-cell">0</td>').join('')}
+                            <td class="totale-cell">0.00 €</td>
+                        </tr>`;
+                    return;
+                }
+
+                let incassoTotale = 0;
+
+                // Mappa per accumulare le quantità totali vendute di ogni prodotto
+                const totaliPerProdotto = {};
+                prodotti.forEach(p => { totaliPerProdotto[p.id || p.nome] = 0; });
+
+                tbody.innerHTML = ordini.map(ord => {
+                    incassoTotale += ord.totale;
+                    let dataFormattata = ord.data_ora.replace('T', ' ').substring(0, 16);
+
+                    // Mappa la quantità ordinata nel singolo ordine
+                    const mappaQta = {};
+                    if (Array.isArray(ord.dettaglio)) {
+                        ord.dettaglio.forEach(item => {
+                            if (typeof item === 'string') {
+                                mappaQta[item] = (mappaQta[item] || 0) + 1;
+                            } else if (typeof item === 'object' && item !== null) {
+                                const keyId = item.id || item.nome;
+                                const keyNome = item.nome;
+                                const qta = item.numero || 1;
+
+                                if (keyId) mappaQta[keyId] = (mappaQta[keyId] || 0) + qta;
+                                if (keyNome && keyNome !== keyId) mappaQta[keyNome] = (mappaQta[keyNome] || 0) + qta;
+                            }
+                        });
+                    }
+
+                    // Crea le celle della riga corrente e accumula nei totali generali
+                    let celleProdotti = prodotti.map(p => {
+                        let key = p.id || p.nome;
+                        let qta = mappaQta[p.id] || mappaQta[p.nome] || 0;
+
+                        totaliPerProdotto[key] = (totaliPerProdotto[key] || 0) + qta;
+
+                        if (qta > 0) {
+                            return `<td class="qty-cell qty-active">${qta}</td>`;
+                        } else {
+                            return `<td class="qty-cell" style="color: #cbd5e1;">-</td>`;
+                        }
+                    }).join('');
+
+                    return `
+                        <tr>
+                            <td><span class="badge-id">#${ord.id}</span></td>
+                            <td style="white-space: nowrap;">${dataFormattata}</td>
+                            <td>
+                                ${ord.nome_cliente && ord.nome_cliente !== 'N/A' ? `<span class="badge-cliente">${ord.nome_cliente}</span>` : '<span style="color: #94a3b8;">—</span>'}
+                            </td>
+                            ${celleProdotti}
+                            <td class="totale-cell">${ord.totale.toFixed(2)} €</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // 4. Genera il piè di pagina con totali prodotti e incasso totale nell'ultima colonna
+                const tfoot = document.getElementById('tabella-pie');
+                let footerCelleProdotti = prodotti.map(p => {
+                    let key = p.id || p.nome;
+                    let totQta = totaliPerProdotto[key] || 0;
+                    if (totQta > 0) {
+                        return `<td class="qty-cell qty-active" style="background-color: #dcfce7;">${totQta}</td>`;
+                    } else {
+                        return `<td class="qty-cell" style="color: #94a3b8;">0</td>`;
+                    }
+                }).join('');
+
+                tfoot.innerHTML = `
+                    <tr>
+                        <td colspan="3"></td>
+                        ${footerCelleProdotti}
+                        <td class="totale-cell">${incassoTotale.toFixed(2)} €</td>
+                    </tr>
+                `;
+
+            } catch (e) {
+                alert("Errore durante il caricamento della matrice da SQLite: " + e);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cassa Festa - POS</title>
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --panel-bg: #ffffff;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bar-color: #0284c7;
+            --cibo-color: #d97706;
+            --text-color: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Evita lo scroll della pagina intera */
+        }
+
+        /* --- BARRA SUPERIORE (HEADER) --- */
+        header {
+            background-color: var(--panel-bg);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+
+        .btn-header {
+            background-color: #e2e8f0;
+            color: var(--text-color);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-header:hover { background-color: #cbd5e1; }
+
+        /* --- LAYOUT PRINCIPALE (SOLUZIONE BUG) --- */
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px); /* Tieni conto dell'header */
+            align-items: stretch; /* Mantiene la cassa a tutta altezza */
+        }
+
+        /* --- COLONNA SINISTRA: SELEZIONE PRODOTTI --- */
+        .products-section {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto; /* Permette lo scroll dei soli prodotti se ce ne sono tanti */
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 15px 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .category-title.bar { color: var(--bar-color); }
+        .category-title.cibo { color: var(--cibo-color); margin-top: 25px; }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        /* Tasti Prodotti con altezza fissa (non cambiano dimensione!) */
+        .btn-product {
+            background: var(--panel-bg);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.05s, border-color 0.2s;
+        }
+        .btn-product:active { transform: scale(0.96); }
+
+        .btn-product.bar { border-left: 6px solid var(--bar-color); }
+        .btn-product.cibo { border-left: 6px solid var(--cibo-color); }
+
+        .product-name { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+        .product-price { font-size: 1rem; font-weight: 600; color: #64748b; }
+
+        /* --- COLONNA DESTRA: CASSA E CARRELLO --- */
+        .cart-section {
+            width: 380px; /* Larghezza FISSA per la cassa */
+            background: var(--panel-bg);
+            border-left: 2px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-header {
+            padding: 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Lista ordini con scroll indipendente */
+        .cart-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 20px;
+            list-style: none;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .cart-footer {
+            padding: 20px;
+            background: #f8fafc;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .total-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        .action-buttons { display: flex; gap: 10px; }
+
+        .btn-action {
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-action:hover { opacity: 0.9; }
+
+        .btn-stampa { background: var(--success); color: white; flex: 2; }
+        .btn-svuota { background: #fee2e2; color: var(--danger); flex: 1; }
+
+        /* Overlay che blocca tutte le interazioni */
+        .stampa-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.75);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DI NAVIGAZIONE SUPERIORE -->
+    <header>
+        <div class="logo">
+            <span></span> CASSA FESTA DI PONTICELLO
+        </div>
+        <!-- PULSANTE STORICO ORDINAZIONI DAL DB -->
+        <a href="/storico" class="btn-header" style="text-decoration: none;">
+            Storico Ordini
+        </a>
+    </header>
+
+    <!-- CONTENITORE PRINCIPALE -->
+    <div class="main-container">
+
+        <!-- COLONNA PRODOTTI (BAR & CIBO) -->
+        <div class="products-section">
+
+            <!-- CATEGORIA CIBO -->
+            <div class="category-title cibo">Sgabei</div>
+            <div id="grid-cibo" class="products-grid"></div>
+            
+            <!-- CATEGORIA BAR -->
+            <div class="category-title bar">Bar</div>
+            <div id="grid-bar" class="products-grid"></div>
+
+        </div>
+
+        <!-- COLONNA RIEPILOGO CASSA -->
+        <div class="cart-section">
+            <div class="cart-header">
+                <h2>Ordine Attuale</h2>
+            </div>
+
+            <ul id="lista-schermo" class="cart-list"></ul>
+
+            <div class="cart-footer">
+                <div class="total-box">
+                    <span>Totale</span>
+                    <span>€<span id="totale-schermo">0.00</span></span>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-action btn-svuota" onclick="svuotaCarrello()">Annulla</button>
+                    <button class="btn-action btn-stampa" onclick="inviaStampa()">STAMPA</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT JAVASCRIPT PER LE CHIAMATE API A JULIA -->
+    <script>
+        // Variabile globale per memorizzare l'impostazione inviata da Julia
+        let configChiediNome = false;
+        let carrelloIsEmpty = true;
+
+        // ---------------------------------------------------------------------
+        // --- PROCESSI AUTOMATICI ALL'AVVIO ------------------------------------
+
+        // guarda l'imopstazione per chiedere il nome
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                let risposta = await fetch('/api/config');
+                let config = await risposta.json();
+
+                // Salva la scelta impostata su Julia (true o false)
+                configChiediNome = config.chiedi_nome;
+            } catch (e) {
+                console.error("Impossibile caricare la configurazione:", e);
+            }
+        });
+
+        // prepara i tasti dei prodotti
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Chiede il listino a Julia
+                let risposta = await fetch('/api/prodotti');
+                let prodotti = await risposta.json();
+
+                // 2. Per ogni prodotto ricevuto da Julia, crea un pulsante e lo inserisce nella griglia
+                prodotti.forEach(prod => {
+                    // Crea l'elemento <button>
+                    let btn = document.createElement('button');
+                    btn.className = `btn-product ${prod.categoria}`;
+
+                    // Inserisce il testo con nome e prezzo inviati da Julia
+                    btn.innerHTML = `
+                        <span class="product-name">${prod.nome}</span>
+                        <span class="product-price">${prod.prezzo.toFixed(2)} €</span>
+                    `;
+
+                    // Assegna la funzione di click inviando l'ID a Julia
+                    btn.onclick = () => cliccatoProdotto(prod.id);
+
+                    // Aggiunge il pulsante al contenitore corretto (grid-bar o grid-cibo)
+                    let contenitore = document.getElementById(`grid-${prod.categoria}`);
+                    if (contenitore) {
+                        contenitore.appendChild(btn);
+                    }
+                });
+            } catch (e) {
+                alert("Errore nel caricamento del listino da Julia: " + e);
+            }
+        });
+
+        // sincronizza il carrello ad ogni caricamento della pagina
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/carrello');
+                const data = await res.json();
+
+                // Richiama la tua funzione di rendering del carrello nell'interfaccia
+                if (data.carrello.length > 0) {
+                    aggiornaInterfaccia(data.carrello, data.totale);
+                }
+
+            } catch (e) {
+                console.error("Errore sincronizzazione carrello:", e);
+            }
+        });
+
+        // ---------------------------------------------------------------------
+        // --- ALTRI LISTENER --------------------------------------------------
+
+        // controlla se vengono premuti i tasti backspace o enter
+        document.addEventListener('keydown', (event) => {
+            // 1. Se l'operatore sta digitando dentro un campo di testo (es. una casella di ricerca),
+            // non intercettiamo i tasti per evitare di cancellare o inviare mentre scrive.
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            // 2. Tasto INVIO (Enter) -> Richiama la stampa
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Blocca comportamenti di default del browser
+                inviaStampa();
+            }
+
+            // 3. Tasto BACKSPACE (Cancella) -> Richiama l'annullamento/svuotamento
+            if (event.key === 'Backspace') {
+                event.preventDefault(); // FONDAMENTALE: evita che il browser torni alla pagina precedente!
+                svuotaCarrello(); // Oppure la tua funzione per annullare l'ordine
+            }
+        });
+
+        // Impedisce l'uscita accidentale se ci sono prodotti nel carrello
+        window.addEventListener('beforeunload', (event) => {
+            if (!carrelloIsEmpty) {
+                event.preventDefault();
+                event.returnValue = ''; // Richiesto dai browser per mostrare l'avviso standard
+            }
+        });
+
+        // ---------------------------------------------------------------------
+        // --- FUNZIONI INTERAZIONI UTENTE -------------------------------------
+
+        async function cliccatoProdotto(idProdotto) {
+            let risposta = await fetch('/api/aggiungi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: idProdotto })
+            });
+            let dati = await risposta.json();
+            aggiornaInterfaccia(dati.carrello, dati.totale);
+        }
+
+        async function svuotaCarrello() {
+            let risposta = await fetch('/api/svuota', {
+                method: 'POST'
+            });
+            let dati = await risposta.json();
+            aggiornaInterfaccia(dati.carrello, dati.totale);
+        }
+
+        async function inviaStampa() {
+            let nomeCliente = "";
+
+            if (carrelloIsEmpty){
+                alert("Carrello vuoto.");
+                return;
+            }
+
+            // Se l'opzione in Julia è attiva, mostra il popup del browser
+            if (configChiediNome) {
+                let input = prompt("Inserisci il nome del cliente:");
+
+                // Se l'operatore clicca "Annulla" nel popup, l'invio viene annullato
+                if (input === null) {
+                    return;
+                }
+                nomeCliente = input.trim();
+            }
+
+            const overlay = document.getElementById('overlay-stampa');
+
+            try {
+                // Mostra la schermata di attesa e blocca ogni clic sulla pagina
+                if (overlay) overlay.style.display = 'flex';
+
+                // Invia l'ordine a Julia includendo il nome
+                let risposta = await fetch('/api/stampa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: nomeCliente })
+                });
+
+                if (risposta.ok) {
+                    aggiornaInterfaccia([], 0.0);
+                } else {
+                    let errore = await risposta.text();
+                    alert("Errore: " + errore);
+                }
+            } catch (e) {
+                alert("Errore di connessione con il server: " + e.message);
+            } finally {
+                // Nasconde la schermata di attesa e sblocca l'interfaccia
+                if (overlay) overlay.style.display = 'none';
+            }
+        }
+
+        function aggiornaInterfaccia(carrello, totale) {
+            const listaUl = document.getElementById('lista-schermo');
+
+            carrelloIsEmpty = carrello.length === 0;
+
+            listaUl.innerHTML = carrello.map(p => `
+                <li class="cart-item" style="display: flex; justify-content: space-between;">
+                    <span>${p.numero}x ${p.nome.toUpperCase()}</span>
+                    <span>${p.prezzo_riga.toFixed(2)} €</span>
+                </li>
+            `).join('');
+
+            document.getElementById('totale-schermo').innerText = totale.toFixed(2);
+        }
+    </script>
+
+    <div id="overlay-stampa" class="stampa-overlay">
+    <div class="spinner"></div>
+    <div>Stampa in corso...</div>
+</div>
+</body>
+</html>
