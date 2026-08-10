@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matrice Storico Ordini - Cassa Festa</title>
+    <title>Storico Ordini - Cassa Ponticello</title>
     <style>
         :root {
             --bg-color: #f1f5f9;
@@ -245,7 +245,7 @@
 
                 tbody.innerHTML = ordini.map(ord => {
                     incassoTotale += ord.totale;
-                    let dataFormattata = ord.data_ora.replace('T', ' ').substring(0, 16);
+                    let dataFormattata = formattaDataRoma(ord.data_ora);
 
                     // Mappa la quantità ordinata nel singolo ordine
                     const mappaQta = {};
@@ -322,6 +322,29 @@
                 alert("Errore durante il caricamento della matrice da SQLite: " + e);
             }
         });
+
+        function formattaDataRoma(stringaData) {
+            if (!stringaData) return "—";
+
+            // 1. Uniforma il formato aggiungendo 'T' e 'Z' per far capire a JS che la data è UTC
+            let isoString = stringaData.replace(' ', 'T');
+            if (!isoString.endsWith('Z') && !isoString.includes('+')) {
+                isoString += 'Z';
+            }
+
+            const data = new Date(isoString);
+            if (isNaN(data.getTime())) return stringaData; // Fallback se il formato non è valido
+
+            // 2. Converte la data nel fuso orario di Roma
+            return data.toLocaleString('it-IT', {
+                timeZone: 'Europe/Rome',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
     </script>
 </body>
 </html>

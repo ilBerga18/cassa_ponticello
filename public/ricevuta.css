@@ -1,0 +1,243 @@
+/* Caricamento Font Locale (scarica Outfit e Space Mono sul server/PC) */
+@font-face {
+  font-family: 'Outfit';
+  src: url('fonts/Outfit-Bold.ttf') format('truetype');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('fonts/SpaceMono-Bold.ttf') format('truetype');
+  font-weight: 700;
+}
+
+@page { size: 576px auto; margin: 0; }
+* { box-sizing: border-box; }
+
+body {
+  width: 576px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: 'Outfit', sans-serif;
+  background: #ffffff;
+  color: #000000;
+}
+
+.ticket-card {
+  border: 2px solid #000000;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.header { text-align: center; margin-bottom: 12px; }
+
+/* Invece di display: flex per header-top */
+.header-top {
+  width: 100%;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #000000;
+}
+
+.header-top::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.festa-title {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0;
+  color: #222222;
+  display: block;
+}
+
+.header-top .festa-title {
+  float: left;
+  display: inline-block;
+}
+
+.order-number-small {
+  float: right;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  border: 1px solid #000000;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.festa-sub {
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-top: 2px;
+  clear: both;
+}
+
+.tipo-scontrino {
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  border: 2px solid #000000;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 8px;
+}
+
+.meta-instruction {
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.order-hero {
+  border: 2px solid #000000;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  margin: 14px 0;
+}
+
+.order-label {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.order-number {
+  font-size: 78px;
+  font-weight: 900;
+  line-height: 0.95;
+  margin-top: 2px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* Invece di flexbox per meta-box e totale-box */
+.meta-box, .totale-box {
+  display: table;
+  width: 100%;
+  border-top: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  padding: 8px 4px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.meta-box > div:first-child { display: table-cell; text-align: left; }
+.meta-box > div:last-child { display: table-cell; text-align: right; }
+
+.totale-box {
+  border-top: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  padding: 10px 0;
+  margin-top: 16px;
+}
+
+.totale-label {
+  display: table-cell;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.totale-valore {
+  display: table-cell;
+  text-align: right;
+  vertical-align: middle;
+  font-size: 34px;
+  font-weight: 900;
+  font-family: 'Space Mono', monospace;
+}
+
+.badge-cliente {
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #000000;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 900;
+  text-align: left;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #000000;
+}
+
+td {
+  padding: 10px 0;
+  border-bottom: 1px dashed #aaaaaa;
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+
+.col-qta { width: 22%; }
+.col-nome { font-size: 22px; font-weight: 800; }
+.col-prezzo {
+  width: 30%;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'Space Mono', monospace;
+}
+
+.qta-pill {
+  display: inline-block;
+  border: 2px solid #000000;
+  font-weight: 900;
+  font-size: 22px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-family: 'Space Mono', monospace;
+  text-align: center;
+  min-width: 55px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bottom-divider {
+  border-top: 2px solid #000000;
+  margin-top: 14px;
+}
+
+.ticket-cucina .order-number {
+  font-size: 58px; /* Ridotto da 78px a 58px */
+}
+
+.ticket-cucina .col-nome {
+  font-size: 28px; /* Ingrandito da 22px a 28px per massima leggibilità */
+}
+
+.ticket-cucina .qta-pill {
+  font-size: 26px; /* Adeguato il pill della quantità ai nomi più grandi */
+  padding: 4px 10px;
+}
