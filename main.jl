@@ -55,11 +55,11 @@ LISTINO_CAT = Dict(prod["id"] => prod["categoria"] for prod in PRODOTTI)
 
 # ==============================================================================
 # === FUNZIONI =================================================================
-function get_totale_corrente()
-    if isempty(CARRELLO_CORRENTE)
+function get_totale_corrente(items=Any[])
+    if isempty(items)
         return 0.0
     end
-    return sum(item.numero * get(LISTINO_PREZZI, item.id, 0.0) for item in CARRELLO_CORRENTE)
+    return sum(item.numero * get(LISTINO_PREZZI, item.id, 0.0) for item in items)
 end
 
 function salva_ordine_db(totale::Float64, carrello::Vector{ItemOrdine}, nome_cliente::String)
@@ -291,13 +291,13 @@ function image_to_escpos_raster(img_path::String)::Vector{UInt8}
     return take!(buffer)
 end
 
-function crea_stream_grafico(progressivo::Integer, nome_cliente::String)
-    items_bar = filter(i -> LISTINO_CAT[i.id] == "bar", CARRELLO_CORRENTE)
-    items_cibo = filter(i -> LISTINO_CAT[i.id] == "cibo", CARRELLO_CORRENTE)
+function crea_stream_grafico(progressivo::Integer, nome_cliente::String, items=Any[])
+    items_bar = filter(i -> LISTINO_CAT[i.id] == "bar", items)
+    items_cibo = filter(i -> LISTINO_CAT[i.id] == "cibo", items)
 
     ora_attuale = now()
     data_formattata = Dates.format(ora_attuale, "dd/mm/yyyy HH:MM")
-    totale = get_totale_corrente()
+    totale = get_totale_corrente(items)
 
     stream_buf = IOBuffer()
 
@@ -307,7 +307,7 @@ function crea_stream_grafico(progressivo::Integer, nome_cliente::String)
 
     # --- SEGMENTO 1: RICEVUTA CLIENTE ---
     html_ric = genera_html_scontrino(:ricevuta; progressivo=progressivo, nome_cliente=nome_cliente,
-                                     items=CARRELLO_CORRENTE, data_str=data_formattata, totale=totale)
+                                     items=items, data_str=data_formattata, totale=totale)
     file_ric = tempname() * ".png"
     html_to_png(html_ric, file_ric)
 
@@ -393,6 +393,10 @@ end
     return file("public/storico.html")
 end
 
+@get "/statistiche" function()
+    return file("public/statistiche.html")
+end
+
 # API che estrae tutti gli ordini dal database SQLite e li invia come JSON
 @get "/api/storico" function()
     # Query per selezionare tutti gli ordini (dal più recente al più vecchio)
@@ -429,7 +433,7 @@ end
         CARRELLO_CORRENTE[idx].prezzo_riga += LISTINO_PREZZI[id_prodotto]
     end
     
-    totale_corrente = get_totale_corrente()
+    totale_corrente = get_totale_corrente(CARRELLO_CORRENTE)
     
     # Invia al browser lo stato agigornato
     return json(Dict(
@@ -454,10 +458,10 @@ end
     nome_cliente = get(body, :nome, "")
 
     try
-        totale_corrente = get_totale_corrente()
+        totale_corrente = get_totale_corrente(CARRELLO_CORRENTE)
         progressivo = salva_ordine_db(totale_corrente, CARRELLO_CORRENTE, nome_cliente)
 
-        payload_stampa = crea_stream_grafico(progressivo, nome_cliente)
+        payload_stampa = crea_stream_grafico(progressivo, nome_cliente, CARRELLO_CORRENTE)
 
         try
             # Apre la connessione socket con l'IP della stampante
@@ -486,8 +490,72 @@ end
 @get "/api/carrello" function()
     return json(Dict(
         "carrello" => CARRELLO_CORRENTE,
-        "totale"   => get_totale_corrente()
+        "totale"   => get_totale_corrente(CARRELLO_CORRENTE)
         ))
+end
+
+
+@post "/api/ristampa" function(req::HTTP.Request)
+    try
+        body = JSON3.read(req.body)
+        id_raw = get(body, :id, nothing)
+
+        if isnothing(id_raw)
+            return HTTP.Response(400, "ID ordine mancante")
+        end
+
+        id_ordine = id_raw isa Integer ? id_raw : parse(Int, string(id_raw))
+
+        query = "SELECT id, data_ora, totale, nome_cliente, dettaglio_json FROM ordini WHERE id = ?"
+        risultati = DBInterface.execute(db, query, [id_ordine])
+
+        riga_trovata = nothing
+        for riga in risultati
+            riga_trovata = riga
+            break
+        end
+
+        if isnothing(riga_trovata)
+            return HTTP.Response(404, "Ordine #$id_ordine non trovato nel database")
+        end
+
+        # Estrazione identica a /api/storico
+        nome_cliente = coalesce(riga_trovata.nome_cliente, "")
+        if nome_cliente == "N/A"
+            nome_cliente = ""
+        end
+
+        dettaglio_raw = JSON3.read(riga_trovata.dettaglio_json)
+
+        # Ricostruzione del vettore ItemOrdine
+        items = ItemOrdine[
+            ItemOrdine(
+                string(item.id),
+                Int(item.numero),
+                string(item.nome),
+                Float64(item.prezzo_riga)
+                ) for item in dettaglio_raw
+                ]
+
+        # 3. Genera lo stream ESC/POS e invia alla stampante
+        payload_stampa = crea_stream_grafico(id_ordine, nome_cliente, items)
+
+        try
+            sock = connect(PRINTER_IP, 9100)
+            write(sock, payload_stampa)
+            close(sock)
+            println("Ristampa ordine #$id_ordine inviata con successo a $PRINTER_IP:9100")
+        catch e
+            println("Errore di connessione alla stampante durante la ristampa: $e")
+            rethrow(e)
+        end
+
+        return json(Dict("status" => "ok"))
+
+    catch e
+        println("Errore durante la ristampa: $e")
+        return HTTP.Response(500, "Errore durante la ristampa: $e")
+    end
 end
 
 
