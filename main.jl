@@ -20,7 +20,7 @@ end
 # === IMPOSTAZIONI =============================================================
 const CHIEDI_NOME_CLIENTE = true
 
-const PRINTER_IP = "127.0.0.1"
+const PRINTER_IP = "192.168.1.10"
 
 const PRODOTTI = [
     Dict("id" => "s_vuo",       "nome" => "Vuoto",              "prezzo" => 2.00, "categoria" => "cibo"),
@@ -93,7 +93,7 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
             """
         end
 
-        cliente_html = !isempty(nome_cliente) ? "<div><strong>CLIENTE:</strong>$(uppercase(nome_cliente))</div>" : ""
+        cliente_html = !isempty(nome_cliente) ? "<div><strong>NOME:</strong>$(uppercase(nome_cliente))</div>" : ""
 
         return """
         <!DOCTYPE html>
@@ -170,7 +170,7 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
         </head>
         <body>
 
-        <div class="ticket-card">
+        <div class="ticket-card ticket-cucina">
 
         <div class="header">
         <div class="header-top">
@@ -204,7 +204,7 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
             """
         end
 
-        cliente_block = !isempty(nome_cliente) ? "<div class='badge-cliente'>CLIENTE: $(uppercase(nome_cliente))</div>" : ""
+        cliente_block = !isempty(nome_cliente) ? "<div class='badge-cliente'>NOME: $(uppercase(nome_cliente))</div>" : ""
 
         return """
         <!DOCTYPE html>
@@ -303,7 +303,7 @@ function crea_stream_grafico(progressivo::Integer, nome_cliente::String)
 
     # Comandi ESC/POS di Inizializzazione e Taglio
     INIT = UInt8[0x1B, 0x40]
-    CUT  = UInt8[0x1D, 0x56, 0x00, 0x0A] # Cut con avanzamento carta
+    CUT = UInt8[0x1B, 0x64, 0x04, 0x1D, 0x56, 0x01]
 
     # --- SEGMENTO 1: RICEVUTA CLIENTE ---
     html_ric = genera_html_scontrino(:ricevuta; progressivo=progressivo, nome_cliente=nome_cliente,
@@ -459,20 +459,20 @@ end
 
         payload_stampa = crea_stream_grafico(progressivo, nome_cliente)
 
-        #try
+        try
             # Apre la connessione socket con l'IP della stampante
-            #sock = connect(PRINTER_IP, 9100)
+            sock = connect(PRINTER_IP, 9100)
 
             # Invia i dati binari/stringa ESC/POS
-            # write(sock, payload_stampa)
+            write(sock, payload_stampa)
 
             # Chiude la connessione
-            #close(sock)
-            #println("Scontrino inviato con successo a $PRINTER_IP:9100")
-        #catch e
-        #    println("Errore di connessione alla stampante: $e")
-        #    rethrow(e)
-        #end
+            close(sock)
+            println("Scontrino inviato con successo a $PRINTER_IP:9100")
+        catch e
+            println("Errore di connessione alla stampante: $e")
+            rethrow(e)
+        end
 
         empty!(CARRELLO_CORRENTE)
 

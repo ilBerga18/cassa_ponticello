@@ -152,6 +152,50 @@
             box-shadow: 0 -3px 6px rgba(0, 0, 0, 0.06);
             font-weight: 800;
         }
+
+        .btn-ristampa {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-ristampa:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .stampa-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.75);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -215,6 +259,7 @@
                 });
 
                 headerHtml += `<th>Totale</th>`;
+                headerHtml += `<th style="text-align: center;">Azioni</th>`;
                 trHeader.innerHTML = headerHtml;
 
                 // 3. Popola il corpo della tabella e calcola i totali per prodotto
@@ -294,6 +339,9 @@
                             </td>
                             ${celleProdotti}
                             <td class="totale-cell">${ord.totale.toFixed(2)} €</td>
+                            <td style="text-align: center;">
+                                <button class="btn-ristampa" onclick="ristampaOrdine(${ord.id})" title="Ristampa questo ordine">🖨️</button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
@@ -315,6 +363,7 @@
                         <td colspan="3"></td>
                         ${footerCelleProdotti}
                         <td class="totale-cell">${incassoTotale.toFixed(2)} €</td>
+                        <td></td>
                     </tr>
                 `;
 
@@ -345,6 +394,35 @@
                 minute: '2-digit'
             });
         }
+
+        async function ristampaOrdine(id) {
+            if (!confirm(`Vuoi ristampare l'ordine #${id}?`)) return;
+
+            const overlay = document.getElementById('overlay-stampa');
+            try {
+                if (overlay) overlay.style.display = 'flex';
+
+                let risposta = await fetch('/api/ristampa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+
+                if (!risposta.ok) {
+                    let err = await risposta.text();
+                    throw new Error(err);
+                }
+            } catch (e) {
+                alert("Errore durante la ristampa: " + e.message);
+            } finally {
+                if (overlay) overlay.style.display = 'none';
+            }
+        }
     </script>
+
+    <div id="overlay-stampa" class="stampa-overlay">
+        <div class="spinner"></div>
+        <div>Stampa in corso...</div>
+    </div>
 </body>
 </html>
