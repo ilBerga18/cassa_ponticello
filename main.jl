@@ -25,22 +25,20 @@ const PRINTER_IP = "192.168.1.10"
 const PRODOTTI = [
     Dict("id" => "s_vuo",       "nome" => "Vuoto",              "prezzo" => 2.00, "categoria" => "cibo"),
     Dict("id" => "s_str",       "nome" => "Stracchino",         "prezzo" => 3.50, "categoria" => "cibo"),
-    Dict("id" => "s_cop_str",   "nome" => "Coppa Stracchino",   "prezzo" => 4.00, "categoria" => "cibo"),
-    Dict("id" => "s_pan_str",   "nome" => "Pancetta Stracchino","prezzo" => 4.00, "categoria" => "cibo"),
-    Dict("id" => "s_sal_str",   "nome" => "Salame Stracchino",  "prezzo" => 4.00, "categoria" => "cibo"),
+    Dict("id" => "s_cop_str",   "nome" => "Coppa Stracchino",   "prezzo" => 3.50, "categoria" => "cibo"),
+    Dict("id" => "s_pan_str",   "nome" => "Pancetta Stracchino","prezzo" => 3.50, "categoria" => "cibo"),
+    Dict("id" => "s_sal_str",   "nome" => "Salame Stracchino",  "prezzo" => 3.50, "categoria" => "cibo"),
     Dict("id" => "s_cop",       "nome" => "Coppa",              "prezzo" => 3.50, "categoria" => "cibo"),
     Dict("id" => "s_pan",       "nome" => "Pancetta",           "prezzo" => 3.50, "categoria" => "cibo"),
     Dict("id" => "s_sal",       "nome" => "Salame",             "prezzo" => 3.50, "categoria" => "cibo"),
     Dict("id" => "s_nut",       "nome" => "Nutella",            "prezzo" => 3.50, "categoria" => "cibo"),
 
     Dict("id" => "birra",       "nome" => "Birra",              "prezzo" => 4.00, "categoria" => "bar"),
-    Dict("id" => "nat1",        "nome" => "Naturale 1L",        "prezzo" => 2.00, "categoria" => "bar"),
-    Dict("id" => "gas1",        "nome" => "Frizzante 1L",       "prezzo" => 2.00, "categoria" => "bar"),
     Dict("id" => "nat05",       "nome" => "Naturale 0.5L",      "prezzo" => 1.00, "categoria" => "bar"),
     Dict("id" => "gas05",       "nome" => "Frizzante 0.5L",     "prezzo" => 1.00, "categoria" => "bar"),
-    Dict("id" => "coca",        "nome" => "CocaCola",           "prezzo" => 3.00, "categoria" => "bar"),
-    Dict("id" => "te",          "nome" => "EstaThe",            "prezzo" => 2.00, "categoria" => "bar"),
-    Dict("id" => "aran",        "nome" => "Aranciata",          "prezzo" => 3.00, "categoria" => "bar")
+    Dict("id" => "coca",        "nome" => "CocaCola",           "prezzo" => 2.50, "categoria" => "bar"),
+    Dict("id" => "te",          "nome" => "EstaThe",            "prezzo" => 1.50, "categoria" => "bar"),
+    Dict("id" => "aran",        "nome" => "Aranciata",          "prezzo" => 2.50, "categoria" => "bar")
 ]
 
 
@@ -107,8 +105,8 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
         <div class="ticket-card">
 
         <div class="header">
-        <div class="festa-title">Festa di Ponticello</div>
-        <h1 class="festa-sub">"I mestieri del borgo"</h1>
+        <div class="festa-title"></div>
+        <h1 class="festa-sub">Gli Sgabei di Ponticello</h1>
         </div>
 
         <div class="order-hero">
@@ -155,7 +153,7 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
         for item in items
             rows_html *= """
             <tr>
-            <td class="col-qta"><span class="qta-pill">$(item.numero)×</span></td>
+            <td class="col-qta"><span class="qta-big">$(item.numero)×</span></td>
             <td class="col-nome">$(item.nome)</td>
             </tr>
             """
@@ -174,7 +172,7 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
 
         <div class="header">
         <div class="header-top">
-        <span class="festa-title">Ponticello — I mestieri del borgo</span>
+        <span class="festa-title">Gli Sgabei di Ponticello</span>
         <span class="order-number-small">Ord. #$(progressivo)</span>
         </div>
         <div class="tipo-scontrino">RITIRO BEVANDE BAR</div>
@@ -198,7 +196,7 @@ function genera_html_scontrino(tipo::Symbol; progressivo::Int, nome_cliente::Str
         for item in items
             items_html *= """
             <tr>
-            <td class="col-qta"><span class="qta-pill">$(item.numero)×</span></td>
+            <td class="col-qta"><span class="qta-big">$(item.numero)×</span></td>
             <td class="col-nome">$(item.nome)</td>
             </tr>
             """

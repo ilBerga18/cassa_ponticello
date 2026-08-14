@@ -220,6 +220,18 @@ tr:last-child td { border-bottom: none; }
   min-width: 55px;
 }
 
+.qta-big {
+  display: inline-block;
+  /*border: 2px solid #000000;*/
+  font-weight: 900;
+  font-size: 28px;
+  /*padding: 3px 8px;*/
+  /*border-radius: 8px;*/
+  font-family: 'Space Mono', monospace;
+  text-align: center;
+  min-width: 55px;
+}
+
 .footer {
   text-align: center;
   margin-top: 14px;
