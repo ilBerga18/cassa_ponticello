@@ -348,6 +348,16 @@
 
                 // 4. Genera il piè di pagina con totali prodotti e incasso totale nell'ultima colonna
                 const tfoot = document.getElementById('tabella-pie');
+
+                // Calcola la somma di tutti i prodotti con categoria "cibo"
+                let totaleCibo = prodotti.reduce((acc, p) => {
+                    if (p.categoria === 'cibo') {
+                        let key = p.id || p.nome;
+                        return acc + (totaliPerProdotto[key] || 0);
+                    }
+                    return acc;
+                }, 0);
+
                 let footerCelleProdotti = prodotti.map(p => {
                     let key = p.id || p.nome;
                     let totQta = totaliPerProdotto[key] || 0;
@@ -360,7 +370,10 @@
 
                 tfoot.innerHTML = `
                     <tr>
-                        <td colspan="3"></td>
+                        <td colspan="2"></td>
+                        <td style="text-align: center; color: #0369a1; font-weight: 700; font-size: 0.95rem; white-space: nowrap;">
+                            Tot. Sgabei: ${totaleCibo}
+                        </td>
                         ${footerCelleProdotti}
                         <td class="totale-cell">${incassoTotale.toFixed(2)} €</td>
                         <td></td>
