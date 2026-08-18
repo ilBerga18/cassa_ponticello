@@ -1,5 +1,6 @@
 [deps]
 DBInterface = "a10d1c49-ce27-4219-8d33-6db1a4562965"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
@@ -9,3 +10,4 @@ Oxygen = "df9a0d86-3283-4920-82dc-4555fc0d1d8b"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
