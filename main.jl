@@ -37,7 +37,8 @@ const PRODOTTI = [
     Dict("id" => "nat05",       "nome" => "Naturale 0.5L",      "prezzo" => 1.00, "categoria" => "bar"),
     Dict("id" => "gas05",       "nome" => "Frizzante 0.5L",     "prezzo" => 1.00, "categoria" => "bar"),
     Dict("id" => "coca",        "nome" => "CocaCola",           "prezzo" => 2.50, "categoria" => "bar"),
-    Dict("id" => "te",          "nome" => "EstaThe",            "prezzo" => 1.50, "categoria" => "bar"),
+    Dict("id" => "tel",         "nome" => "EstaThe Limone",     "prezzo" => 1.50, "categoria" => "bar"),
+    Dict("id" => "tep",         "nome" => "EstaThe Pesca",      "prezzo" => 1.50, "categoria" => "bar"),
     Dict("id" => "aran",        "nome" => "Aranciata",          "prezzo" => 2.50, "categoria" => "bar")
 ]
 
@@ -457,6 +458,12 @@ end
 
     try
         totale_corrente = get_totale_corrente(CARRELLO_CORRENTE)
+
+        # METTE A ZERO IL TOTALE PER CERTI NOMI CHIAVE
+        if lowercase(nome_cliente) == "campeggio" || lowercase(nome_cliente) == "mestieri del borgo"
+            totale_corrente = 0.0
+        end
+
         progressivo = salva_ordine_db(totale_corrente, CARRELLO_CORRENTE, nome_cliente)
 
         payload_stampa = crea_stream_grafico(progressivo, nome_cliente, CARRELLO_CORRENTE)
